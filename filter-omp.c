@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <netcdf.h>
 #include <omp.h>
+#include <string.h>
 
 /* Handle errors by printing an error message and exiting with a
  * non-zero status. */
@@ -18,6 +19,8 @@
 #define NAN -1
 
 #define TNUM 4
+
+#define chunk 2048
 
 float data_in[NX][NY];
 float data_out[NX][NY];
@@ -47,15 +50,27 @@ int main()
         ERR(retval);
 
     printf("PROCESANDO con %d threads...\n", TNUM);
+
+
+    FILE *head;
+    head = fopen("Imagen/parte00", "wb");
     
+    char * header;
+    header = (char *) calloc(sizeof(char), 64);
+    sprintf(header, "P2\n%d %d\n255\n", NY/2, NX/2);
+    fwrite(header, sizeof(char), strlen(header), head);
+    free(header);
+
+    fclose(head);
+
 
     omp_set_num_threads(TNUM);
     double start_time = omp_get_wtime();
     #pragma omp parallel
     {
     	int threadNum = omp_get_thread_num();
-    	//convolute(threadNum);
-    	#pragma omp for collapse(2)
+
+    	#pragma omp for collapse(2) //schedule(static, chunk)
     	for (int i=0; i<NX; ++i){
     		for (int j=0; j<NY; ++j){
     			convolucion(i, j);
@@ -68,7 +83,7 @@ int main()
 
     	char * filename;
         filename = (char *) calloc(sizeof(char), 30);
-    	sprintf(filename, "parte%02d.pgm", threadNum);
+    	sprintf(filename, "Imagen/parte%02d", threadNum+1);
 
     	int beg = (NX/TNUM) * threadNum;
     	int end = (NX/TNUM) * (threadNum+1);
@@ -85,31 +100,34 @@ int main()
 
     	fclose(fd);*/
 
-    	FILE* pgmimg; 
-    	pgmimg = fopen(filename, "wb");
-
+    	FILE* fragment; 
+    	fragment = fopen(filename, "wb");
         free(filename);
   
-    	// Writing Magic Number to the File 
-    	fprintf(pgmimg, "P2\n");  
+    	/*// Writing Magic Number to the File 
+    	fprintf(fragment, "P2\n");  
   
     	// Writing Width and Height 
-    	fprintf(pgmimg, "%d %d\n", NY, height);
+    	fprintf(fragment, "%d %d\n", NY/2, height/2);
   
     	// Writing the maximum gray value 
-    	fprintf(pgmimg, "255\n");
+    	fprintf(fragment, "255\n");*/
     	
     	for (int i=beg; i<end; i++) { 
         	for (int j=0; j<NY; j++) {
-           	 	// Writing the gray values in the 2D array to the file 
-            	fprintf(pgmimg, "%d ", (int) data_out[i][j]);
+           	 	// Writing the gray values in the 2D array to the file
+            	fprintf(fragment, "%d ", (int) data_out[i][j]);
+                j++;
         	}
-        	fprintf(pgmimg, "\n");
+        	fprintf(fragment, "\n");
+            i++;
     	} 
 
-    	fclose(pgmimg);
+    	fclose(fragment);
 
 	}
+
+    system("Scripts/generar_imagen.sh");
 
     double time = omp_get_wtime() - start_time;
 

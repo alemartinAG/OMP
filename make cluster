@@ -1,0 +1,4 @@
+all:
+	icc filter-omp.c -I/home/ale/Netcdf/SO2/hpc/libs/netcdf/include -L/home/ale/Netcdf/SO2/hpc/libs/netcdf/lib -lnetcdf -lm -qopenmp -o filter-omp
+clean:
+	rm filter-omp
