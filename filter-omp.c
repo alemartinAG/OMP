@@ -22,6 +22,8 @@
 
 #define chunk 2048
 
+#define NDIMS 2
+
 float data_in[NX][NY];
 float data_out[NX][NY];
 
@@ -32,6 +34,9 @@ int w[WS][WS] = {
             };
 
 void convolucion(int, int);
+void createNetCDF();
+
+//TODO: PASAR data_out a SHORT
 
 int main()
 {
@@ -79,7 +84,7 @@ int main()
 
     	#pragma omp barrier
 
-    	printf("GUARDANDO ARCHIVO - %d\n", threadNum);
+    	/*printf("GUARDANDO ARCHIVO - %d\n", threadNum);
 
     	char * filename;
         filename = (char *) calloc(sizeof(char), 30);
@@ -89,29 +94,9 @@ int main()
     	int end = (NX/TNUM) * (threadNum+1);
     	int height = (NX/TNUM);
 
-    	/*FILE *fd;
-    	fd = fopen(filename, "wb");
-
-    	float *ptr;
-    	ptr = &data_out[0][0];
-    	ptr += beg;
-
-    	fwrite(ptr, sizeof(float), tam, fd);
-
-    	fclose(fd);*/
-
     	FILE* fragment; 
     	fragment = fopen(filename, "wb");
         free(filename);
-  
-    	/*// Writing Magic Number to the File 
-    	fprintf(fragment, "P2\n");  
-  
-    	// Writing Width and Height 
-    	fprintf(fragment, "%d %d\n", NY/2, height/2);
-  
-    	// Writing the maximum gray value 
-    	fprintf(fragment, "255\n");*/
     	
     	for (int i=beg; i<end; i++) { 
         	for (int j=0; j<NY; j++) {
@@ -123,11 +108,12 @@ int main()
             i++;
     	} 
 
-    	fclose(fragment);
+    	fclose(fragment);*/
 
 	}
 
-    system("Scripts/generar_imagen.sh");
+    //system("Scripts/generar_imagen.sh");
+    createNetCDF();
 
     double time = omp_get_wtime() - start_time;
 
@@ -149,6 +135,48 @@ int main()
     return 0;
 }
 
+void createNetCDF(){
+
+    char filename[32] = {"filtered.nc"};
+    int ncid, x_dimid, y_dimid, varid, retval;
+    int dimids[NDIMS];
+
+    // Creamos archivo, si ya existe no se sobreescribe
+    if ((retval = nc_create(filename, NC_NOCLOBBER, &ncid)))
+        ERR(retval);
+
+    /* Definimos dimensiones */
+    if ((retval = nc_def_dim(ncid, "x", NX, &x_dimid)))
+      ERR(retval);
+    if ((retval = nc_def_dim(ncid, "y", NY, &y_dimid)))
+      ERR(retval);
+
+    dimids[0] = x_dimid;
+    dimids[1] = y_dimid;
+
+    // Definimos la variable
+    if ((retval = nc_def_var(ncid, "CMI", NC_FLOAT, NDIMS, 
+                dimids, &varid)))
+    ERR(retval);
+
+    /* End define mode. This tells netCDF we are done defining
+    * metadata. */
+    if ((retval = nc_enddef(ncid)))
+      ERR(retval);
+
+    /* Write the pretend data to the file. Although netCDF supports
+    * reading and writing subsets of data, in this case we write all
+    * the data in one operation. */
+    if ((retval = nc_put_var_float(ncid, varid, &data_out[0][0])))
+      ERR(retval);
+
+    /* Close the file. This frees up any internal netCDF resources
+    * associated with the file, and flushes any buffers. */
+    if ((retval = nc_close(ncid)))
+      ERR(retval);
+
+}
+
 void convolucion(int i, int j){
 	
 	data_out[i][j] = 0;
@@ -161,7 +189,7 @@ void convolucion(int i, int j){
         }
 
         for(int l=0; l<WS; l++){
-            data_out[i][j] += w[k][l]*data_in[i-k][j-l];
+            data_out[i][j] += w[k][l]*data_in[i-k-1][j-l-1];
         }
     }
 }

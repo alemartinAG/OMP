@@ -11,3 +11,4 @@ clean:
 	rm filter-omp
 	rm -r Imagen
 	mkdir Imagen
+	rm filtered.nc
