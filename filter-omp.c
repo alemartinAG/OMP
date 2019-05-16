@@ -15,29 +15,22 @@
 /* Lectura de una matriz de 21696 x 21696 */
 #define NX 21696
 #define NY 21696
-#define WS 3
-#define NAN -1
+#define WS 3    // tamaño de matriz de filtro
+#define NAN -1  // Not A Number
 
-#define TNUM 4
-#define COMPR 2
+#define TNUM 4  // numero de threads
+#define COMPR 2 // razon de compresion de imagen
 
-#define chunk 2048
+#define chunk 2048 // tamaño de cache
 
-#define NDIMS 2
-
-//float data_in[NX][NY];
-//float data_out[NX][NY];
-
+// matriz filtro
 int w[WS][WS] = {
                 {-1, -1, -1},
                 {-1,  8, -1},
                 {-1, -1, -1}
             };
 
-void convolucion(int, int, short*, short*);
 void createNetCDF(short *);
-
-//TODO: PASAR data_out a SHORT
 
 int main()
 {
@@ -67,7 +60,6 @@ int main()
         ERR(retval);
     }
 
-
     /* Creo matriz resultante */
 
     short *data_out;
@@ -80,22 +72,28 @@ int main()
     double start_time = omp_get_wtime();
     #pragma omp parallel
     {
-    	int threadNum = omp_get_thread_num();
+
+        int threadNum = omp_get_thread_num();
 
     	#pragma omp for collapse(2) //schedule(static, chunk)
     	for (int i=0; i<NX; ++i){
     		for (int j=0; j<NY; ++j){
-    			//convolucion(i, j, &data_in[0], &data_out[0]);
-                data_out[i + j*NY] = 0;
+
+                data_out[i*NX + j] = 0;
 
                 for(int k=0; k<WS; k++){
-                    if(data_in[i+j*NY] == NAN){
-                        data_out[i + j*NY] = NAN;
-                        break;
+                    if(data_in[i*NX+j] == NAN){
+                        data_out[i*NX+ j] += 0;
+                        //break;
                     }
                     for(int l=0; l<WS; l++){
-                        data_out[i + j*NY] += ((short)w[k][l]) * data_in[(i-k-1) + (j-l-1)*NY];
+                        data_out[i*NX+j] += ((short)w[k][l]) * data_in[(i-k-1)*NX+(j-l-1)];
                     }
+                }
+
+                /* Valores negativos los pongo a 0 */
+                if(data_out[i*NX+j] < 0){
+                    data_out[i*NX+j] = NAN;
                 }
     		}
     	}
@@ -104,6 +102,7 @@ int main()
     double time = omp_get_wtime() - start_time;
     printf("Convolucion finalizada @%f s\n", time);
 
+    omp_set_num_threads(TNUM);
     #pragma omp parallel
     {
 
@@ -114,7 +113,7 @@ int main()
         
         char * header;
         header = (char *) calloc(sizeof(char), 64);
-        sprintf(header, "P2\n%d %d\n255\n", NY/COMPR, NX/COMPR);
+        sprintf(header, "P2\n%d %d\n13000\n", NY/COMPR, NX/COMPR);
         fwrite(header, sizeof(char), strlen(header), head);
         free(header);
 
@@ -135,8 +134,8 @@ int main()
         for (int i=beg; i<end; i++) { 
             for (int j=0; j<NY; j++) {
                 // Writing the gray values in the 2D array to the file
-                //fprintf(fragment, "%d ", (int) data_out[i + j*NY]);
-                fprintf(fragment, "%d ", (int) data_in[i + j*NY]);
+                fprintf(fragment, "%d ", (int) data_out[i*NX + j]);
+                //fprintf(fragment, "%d ", (int) data_in[i + j*NY]);
                 for(int l=1; l<COMPR; l++){
                     j++;
                 }
@@ -173,6 +172,7 @@ void createNetCDF(short * data_out){
 
     char filename[32] = {"filtered.nc"};
     int ncid, x_dimid, y_dimid, varid, retval;
+    int NDIMS = 2;
     int dimids[NDIMS];
 
     // Creamos archivo, si ya existe no se sobreescribe
@@ -209,23 +209,4 @@ void createNetCDF(short * data_out){
     if ((retval = nc_close(ncid)))
       ERR(retval);
 
-}
-
-void convolucion(int i, int j, short * data_in, short * data_out){
-    
-    data_out[i + j *NY] = 0;
-
-    for(int k=0; k<WS; k++){
-
-        //if(data_in[i][j] == NAN){
-        if(data_in[i+j*NY] == NAN){
-            data_out[i + j *NY] += 0;
-            //break;
-        }
-
-        for(int l=0; l<WS; l++){
-            //data_out[i][j] += w[k][l]*data_in[i-k-1][j-l-1];
-            data_out[i + j *NY] +=  ((short) w[k][l]) * data_in[(i-k-1) + (j-l-1)*NY ];
-        }
-    }
 }
