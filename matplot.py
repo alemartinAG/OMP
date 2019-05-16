@@ -9,6 +9,6 @@ datos = g16nc.variables['CMI'][:]
 g16nc.close()
 g16nc = None
 
-fig = plt.figure(figsize=(500,500),dpi=10)
+fig = plt.figure(figsize=(10,10), dpi=5)
 im = plt.imshow(datos, cmap='Greys_r')
 plt.savefig('imagen.png',bbox_inches='tight',pad_inches = 0)

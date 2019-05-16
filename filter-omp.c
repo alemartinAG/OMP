@@ -19,13 +19,14 @@
 #define NAN -1
 
 #define TNUM 4
+#define COMPR 2
 
 #define chunk 2048
 
 #define NDIMS 2
 
-float data_in[NX][NY];
-float data_out[NX][NY];
+//float data_in[NX][NY];
+//float data_out[NX][NY];
 
 int w[WS][WS] = {
                 {-1, -1, -1},
@@ -33,13 +34,19 @@ int w[WS][WS] = {
                 {-1, -1, -1}
             };
 
-void convolucion(int, int);
-void createNetCDF();
+void convolucion(int, int, short*, short*);
+void createNetCDF(short *);
 
 //TODO: PASAR data_out a SHORT
 
 int main()
 {
+
+    /* Abrimos archivo NetCDF y obtenemos matriz la matriz */
+
+    short *data_in;
+    data_in = (short *) calloc(NY*NX, sizeof(short)); //TODO: free
+
     int ncid, varid;
     int x, y, retval;
 
@@ -51,23 +58,23 @@ int main()
         ERR(retval);
 
     /* Leemos la matriz. */
-    if ((retval = nc_get_var_float(ncid, varid, &data_in[0][0])))
+    //if ((retval = nc_get_var_float(ncid, varid, &data_in[0][0])))
+    if ((retval = nc_get_var_short(ncid, varid, &data_in[0])))
         ERR(retval);
 
-    printf("PROCESANDO con %d threads...\n", TNUM);
+    /* Se cierra el archivo y liberan los recursos*/
+    if ((retval = nc_close(ncid))){
+        ERR(retval);
+    }
 
 
-    FILE *head;
-    head = fopen("Imagen/parte00", "wb");
-    
-    char * header;
-    header = (char *) calloc(sizeof(char), 64);
-    sprintf(header, "P2\n%d %d\n255\n", NY/2, NX/2);
-    fwrite(header, sizeof(char), strlen(header), head);
-    free(header);
+    /* Creo matriz resultante */
 
-    fclose(head);
+    short *data_out;
+    data_out = (short *) calloc(NX*NY, sizeof(short));
 
+
+    printf("\nPROCESANDO CON %d THREADS...\n\n", TNUM);
 
     omp_set_num_threads(TNUM);
     double start_time = omp_get_wtime();
@@ -78,64 +85,91 @@ int main()
     	#pragma omp for collapse(2) //schedule(static, chunk)
     	for (int i=0; i<NX; ++i){
     		for (int j=0; j<NY; ++j){
-    			convolucion(i, j);
+    			//convolucion(i, j, &data_in[0], &data_out[0]);
+                data_out[i + j*NY] = 0;
+
+                for(int k=0; k<WS; k++){
+                    if(data_in[i+j*NY] == NAN){
+                        data_out[i + j*NY] = NAN;
+                        break;
+                    }
+                    for(int l=0; l<WS; l++){
+                        data_out[i + j*NY] += ((short)w[k][l]) * data_in[(i-k-1) + (j-l-1)*NY];
+                    }
+                }
     		}
     	}
-
-    	#pragma omp barrier
-
-    	/*printf("GUARDANDO ARCHIVO - %d\n", threadNum);
-
-    	char * filename;
-        filename = (char *) calloc(sizeof(char), 30);
-    	sprintf(filename, "Imagen/parte%02d", threadNum+1);
-
-    	int beg = (NX/TNUM) * threadNum;
-    	int end = (NX/TNUM) * (threadNum+1);
-    	int height = (NX/TNUM);
-
-    	FILE* fragment; 
-    	fragment = fopen(filename, "wb");
-        free(filename);
-    	
-    	for (int i=beg; i<end; i++) { 
-        	for (int j=0; j<NY; j++) {
-           	 	// Writing the gray values in the 2D array to the file
-            	fprintf(fragment, "%d ", (int) data_out[i][j]);
-                j++;
-        	}
-        	fprintf(fragment, "\n");
-            i++;
-    	} 
-
-    	fclose(fragment);*/
-
 	}
 
-    //system("Scripts/generar_imagen.sh");
-    createNetCDF();
-
     double time = omp_get_wtime() - start_time;
+    printf("Convolucion finalizada @%f s\n", time);
 
-    printf("FINALIZADO EN %f SEGUNDOS\n", time);
+    #pragma omp parallel
+    {
 
-    /* Se cierra el archivo y liberan los recursos*/
-    if ((retval = nc_close(ncid))){
-        ERR(retval);
+        int threadNum = omp_get_thread_num();
+
+        FILE *head;
+        head = fopen("Imagen/parte00", "wb");
+        
+        char * header;
+        header = (char *) calloc(sizeof(char), 64);
+        sprintf(header, "P2\n%d %d\n255\n", NY/COMPR, NX/COMPR);
+        fwrite(header, sizeof(char), strlen(header), head);
+        free(header);
+
+        fclose(head);
+
+        char * filename;
+        filename = (char *) calloc(sizeof(char), 30);
+        sprintf(filename, "Imagen/parte%02d", threadNum+1);
+
+        int beg = (NX/TNUM) * threadNum;
+        int end = (NX/TNUM) * (threadNum+1);
+        int height = (NX/TNUM);
+
+        FILE* fragment; 
+        fragment = fopen(filename, "wb");
+        free(filename);
+        
+        for (int i=beg; i<end; i++) { 
+            for (int j=0; j<NY; j++) {
+                // Writing the gray values in the 2D array to the file
+                //fprintf(fragment, "%d ", (int) data_out[i + j*NY]);
+                fprintf(fragment, "%d ", (int) data_in[i + j*NY]);
+                for(int l=1; l<COMPR; l++){
+                    j++;
+                }
+            }
+            fprintf(fragment, "\n");
+            
+            for(int l=1; l<COMPR; l++){
+                i++;
+            }
+        } 
+
+        fclose(fragment);
+
     }
 
-    /*printf("\nGENERANDO IMAGEN...\n");
+    system("Scripts/generar_imagen.sh");
 
-    FILE *fp;
-    fp = fopen("imagen2.png", "wb");
+    time = omp_get_wtime() - start_time;
+    printf("Creacion de imagen finalizada @%f s\n", time);
 
-    fwrite(data_in, sizeof(float), sizeof(data_in), fp);
-    fclose(fp);*/
+    createNetCDF(&data_out[0]);
+
+    time = omp_get_wtime() - start_time;
+    printf("creacion de .nc @%f s\n", time);
+    
+    // Libero matrices
+    free(data_in);
+    free(data_out);
 
     return 0;
 }
 
-void createNetCDF(){
+void createNetCDF(short * data_out){
 
     char filename[32] = {"filtered.nc"};
     int ncid, x_dimid, y_dimid, varid, retval;
@@ -155,7 +189,7 @@ void createNetCDF(){
     dimids[1] = y_dimid;
 
     // Definimos la variable
-    if ((retval = nc_def_var(ncid, "CMI", NC_FLOAT, NDIMS, 
+    if ((retval = nc_def_var(ncid, "CMI", NC_SHORT, NDIMS, 
                 dimids, &varid)))
     ERR(retval);
 
@@ -167,7 +201,7 @@ void createNetCDF(){
     /* Write the pretend data to the file. Although netCDF supports
     * reading and writing subsets of data, in this case we write all
     * the data in one operation. */
-    if ((retval = nc_put_var_float(ncid, varid, &data_out[0][0])))
+    if ((retval = nc_put_var_short(ncid, varid, &data_out[0])))
       ERR(retval);
 
     /* Close the file. This frees up any internal netCDF resources
@@ -177,19 +211,21 @@ void createNetCDF(){
 
 }
 
-void convolucion(int i, int j){
-	
-	data_out[i][j] = 0;
+void convolucion(int i, int j, short * data_in, short * data_out){
+    
+    data_out[i + j *NY] = 0;
 
-	for(int k=0; k<WS; k++){
+    for(int k=0; k<WS; k++){
 
-        if(data_in[i][j] == NAN){
-            data_out[i][j] = NAN;
-            break;
+        //if(data_in[i][j] == NAN){
+        if(data_in[i+j*NY] == NAN){
+            data_out[i + j *NY] += 0;
+            //break;
         }
 
         for(int l=0; l<WS; l++){
-            data_out[i][j] += w[k][l]*data_in[i-k-1][j-l-1];
+            //data_out[i][j] += w[k][l]*data_in[i-k-1][j-l-1];
+            data_out[i + j *NY] +=  ((short) w[k][l]) * data_in[(i-k-1) + (j-l-1)*NY ];
         }
     }
 }
