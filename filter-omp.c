@@ -41,7 +41,7 @@ int main()
     data_in = (short *) calloc(NY*NX, sizeof(short)); //TODO: free
 
     int ncid, varid;
-    int x, y, retval;
+    int retval;
 
     if ((retval = nc_open(FILE_NAME, NC_NOWRITE, &ncid)))
         ERR(retval);
@@ -70,23 +70,22 @@ int main()
 
     omp_set_num_threads(TNUM);
     double start_time = omp_get_wtime();
+
+    int i,j,k,l;
     #pragma omp parallel
     {
-
-        int threadNum = omp_get_thread_num();
-
     	#pragma omp for collapse(2) //schedule(static, chunk)
-    	for (int i=0; i<NX; ++i){
-    		for (int j=0; j<NY; ++j){
+    	for (i=0; i<NX; ++i){
+    		for (j=0; j<NY; ++j){
 
                 data_out[i*NX + j] = 0;
 
-                for(int k=0; k<WS; k++){
+                for(k=0; k<WS; k++){
                     if(data_in[i*NX+j] == NAN){
                         data_out[i*NX+ j] += 0;
                         //break;
                     }
-                    for(int l=0; l<WS; l++){
+                    for(l=0; l<WS; l++){
                         data_out[i*NX+j] += ((short)w[k][l]) * data_in[(i-k-1)*NX+(j-l-1)];
                     }
                 }
@@ -125,24 +124,23 @@ int main()
 
         int beg = (NX/TNUM) * threadNum;
         int end = (NX/TNUM) * (threadNum+1);
-        int height = (NX/TNUM);
 
         FILE* fragment; 
         fragment = fopen(filename, "wb");
         free(filename);
         
-        for (int i=beg; i<end; i++) { 
-            for (int j=0; j<NY; j++) {
+        for (i=beg; i<end; i++) { 
+            for (j=0; j<NY; j++) {
                 // Writing the gray values in the 2D array to the file
                 fprintf(fragment, "%d ", (int) data_out[i*NX + j]);
                 //fprintf(fragment, "%d ", (int) data_in[i + j*NY]);
-                for(int l=1; l<COMPR; l++){
+                for(l=1; l<COMPR; l++){
                     j++;
                 }
             }
             fprintf(fragment, "\n");
             
-            for(int l=1; l<COMPR; l++){
+            for(l=1; l<COMPR; l++){
                 i++;
             }
         } 

@@ -1,0 +1,7 @@
+all:
+	icc filter-omp.c -I/home/Estudiante3/netcdf/SO2/hpc/libs/netcdf/include -L/home/Estudiante3/netcdf/SO2/hpc/libs/netcdf/lib -lnetcdf -lm -qopenmp -o filter-omp
+clean:
+	rm filter-omp
+	rm -r Imagen
+	mkdir Imagen
+	rm filtered.nc
