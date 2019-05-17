@@ -1,4 +1,5 @@
 *.nc
 *.pdf
+*.pgm
 **/Imagen
 cpp_check.txt
