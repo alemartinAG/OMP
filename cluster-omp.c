@@ -18,7 +18,7 @@
 #define WS 3    // tamaño de matriz de filtro
 #define NAN -1  // Not A Number
 
-#define TNUM 4  // numero de threads
+#define TNUM 32  // numero de threads
 #define COMPR 2 // razon de compresion de imagen
 
 #define chunk 2048 // tamaño de cache
@@ -30,15 +30,15 @@ int w[WS][WS] = {
                 {-1, -1, -1}
             };
 
-void createNetCDF(short *);
+short data_in[NX][NY];
+short data_out[NX][NY];
+
+void createNetCDF();
 
 int main()
 {
 
     /* Abrimos archivo NetCDF y obtenemos matriz la matriz */
-
-    short *data_in;
-    data_in = (short *) calloc(NY*NX, sizeof(short)); //TODO: free
 
     int ncid, varid;
     int retval;
@@ -52,7 +52,7 @@ int main()
 
     /* Leemos la matriz. */
     //if ((retval = nc_get_var_float(ncid, varid, &data_in[0][0])))
-    if ((retval = nc_get_var_short(ncid, varid, &data_in[0])))
+    if ((retval = nc_get_var_short(ncid, varid, &data_in[0][0])))
         ERR(retval);
 
     /* Se cierra el archivo y liberan los recursos*/
@@ -60,36 +60,43 @@ int main()
         ERR(retval);
     }
 
-    /* Creo matriz resultante */
-
-    short *data_out;
-    data_out = (short *) calloc(NX*NY, sizeof(short));
-
-
     printf("\nPROCESANDO CON %d THREADS...\n\n", TNUM);
 
-    //int i,j,k,l;
+    int i,j,k,l;
 
     omp_set_num_threads(TNUM);
     double start_time = omp_get_wtime();
     #pragma omp parallel
     {
     	#pragma omp for collapse(2) //schedule(static, chunk)
-    	for (int i=2; i<NX; ++i){
-    		for (int j=2; j<NY; ++j){
-
-                for(int k=0; k<WS; k++){
-                    for(int l=0; l<WS; l++){
-                        data_out[i*NX+j] += ((short)w[k][l]) * data_in[(i-k-1)*NX+(j-l-1)];
+    	for (i=2; i<NX; i++){
+    		for (j=2; j<NY; j++){
+                
+                for(k=0; k<WS; k++){
+                    for(l=0; l<WS; l++){
+                        data_out[i][j] += ((short)w[k][l]) * data_in[i-k-1][j-l-1];
                     }
                 }
 
     		}
     	}
+
+        /*#pragma omp for collapse(2)
+        for (i=0; i<NX; i++){
+            for (j=0; j<NY; j++){
+                /* Valores negativos los pongo como nan 
+                if(data_out[i][j] < 0){
+                    data_out[i][j] = NAN;
+                }
+            }
+        }*/
 	}
 
-    double time_conv = omp_get_wtime() - start_time;
-    printf("Convolucion finalizada @%f s\n", time_conv);
+    double time = omp_get_wtime() - start_time;
+    printf("Convolucion finalizada @%f s\n", time);
+
+
+    /* Creacion de Imagen */
 
     omp_set_num_threads(TNUM);
     #pragma omp parallel
@@ -119,23 +126,23 @@ int main()
         fragment = fopen(filename, "wb");
         free(filename);
         
-        for (int i=beg; i<end; i++) { 
-            for (int j=0; j<NY; j++) {
-
-                if(data_out[i*NX+j] < 0){
-                    data_out[i*NX+j] = NAN;
-                }
+        int m, n;
+        for (m=beg; m<end; m++) { 
+            for (n=0; n<NY; n++) {
                 // Writing the gray values in the 2D array to the file
-                fprintf(fragment, "%d ", (int) data_out[i*NX + j]);
-                //fprintf(fragment, "%d ", (int) data_in[i + j*NY]);
-                for(int l=1; l<COMPR; l++){
-                    j++;
+                if(data_out[m][n] < 0){
+                    data_out[m][n] = 0;
+                }
+
+                fprintf(fragment, "%d ", (int) data_out[m][n]);
+                for(l=1; l<COMPR; l++){
+                    n++;
                 }
             }
             fprintf(fragment, "\n");
             
-            for(int l=1; l<COMPR; l++){
-                i++;
+            for(l=1; l<COMPR; l++){
+                m++;
             }
         } 
 
@@ -145,24 +152,22 @@ int main()
 
     system("Scripts/generar_imagen.sh");
 
-    double time_img = (omp_get_wtime() - start_time) - time_conv;
-    printf("Creacion de imagen finalizada @%f s\n", time_img);
+    time = omp_get_wtime() - start_time;
+    printf("Creacion de imagen finalizada @%f s\n", time);
 
-    createNetCDF(&data_out[0]);
+    createNetCDF(&data_out[0][0]);
 
-    double time_nc = (omp_get_wtime() - start_time) - time_img;
-    printf("creacion de .nc @%f s\n", time_nc);
+    time = omp_get_wtime() - start_time;
+    printf("creacion de .nc @%f s\n", time);
     
     // Libero matrices
-    free(data_in);
-    free(data_out);
-
-    printf("\n-------------------------------------------------\n");
+    //free(data_in);
+    //free(data_out);
 
     return 0;
 }
 
-void createNetCDF(short * data_out){
+void createNetCDF(){
 
     char filename[32] = {"filtered.nc"};
     int ncid, x_dimid, y_dimid, varid, retval;
@@ -195,7 +200,7 @@ void createNetCDF(short * data_out){
     /* Write the pretend data to the file. Although netCDF supports
     * reading and writing subsets of data, in this case we write all
     * the data in one operation. */
-    if ((retval = nc_put_var_short(ncid, varid, &data_out[0])))
+    if ((retval = nc_put_var_short(ncid, varid, &data_out[0][0])))
       ERR(retval);
 
     /* Close the file. This frees up any internal netCDF resources
