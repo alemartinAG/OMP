@@ -80,16 +80,6 @@ int main()
 
     		}
     	}
-
-        /*#pragma omp for collapse(2)
-        for (i=0; i<NX; i++){
-            for (j=0; j<NY; j++){
-                /* Valores negativos los pongo como nan 
-                if(data_out[i][j] < 0){
-                    data_out[i][j] = NAN;
-                }
-            }
-        }*/
 	}
 
     double time = omp_get_wtime() - start_time;
@@ -103,17 +93,6 @@ int main()
     {
 
         int threadNum = omp_get_thread_num();
-
-        FILE *head;
-        head = fopen("Imagen/parte00", "wb");
-        
-        char * header;
-        header = (char *) calloc(sizeof(char), 64);
-        sprintf(header, "P2\n%d %d\n13000\n", NY/COMPR, NX/COMPR);
-        fwrite(header, sizeof(char), strlen(header), head);
-        free(header);
-
-        fclose(head);
 
         char * filename;
         filename = (char *) calloc(sizeof(char), 30);
@@ -149,6 +128,17 @@ int main()
         fclose(fragment);
 
     }
+
+    FILE *head;
+    head = fopen("Imagen/parte00", "wb");
+    
+    char * header;
+    header = (char *) calloc(sizeof(char), 64);
+    sprintf(header, "P2\n%d %d\n13000\n", NY/COMPR, NX/COMPR);
+    fwrite(header, sizeof(char), strlen(header), head);
+    free(header);
+
+    fclose(head);
 
     system("Scripts/generar_imagen.sh");
 

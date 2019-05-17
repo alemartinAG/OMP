@@ -20,6 +20,7 @@
 
 #define TNUM 4  // numero de threads
 #define COMPR 2 // razon de compresion de imagen
+#define MAXVAL 13000
 
 #define chunk 2048 // tamaño de cache
 
@@ -97,17 +98,6 @@ int main()
 
         int threadNum = omp_get_thread_num();
 
-        FILE *head;
-        head = fopen("Imagen/parte00", "wb");
-        
-        char * header;
-        header = (char *) calloc(sizeof(char), 64);
-        sprintf(header, "P2\n%d %d\n13000\n", NY/COMPR, NX/COMPR);
-        fwrite(header, sizeof(char), strlen(header), head);
-        free(header);
-
-        fclose(head);
-
         char * filename;
         filename = (char *) calloc(sizeof(char), 30);
         sprintf(filename, "Imagen/parte%02d", threadNum+1);
@@ -142,6 +132,18 @@ int main()
         fclose(fragment);
 
     }
+
+    FILE *head;
+    head = fopen("Imagen/parte00", "wb");
+    
+    char * header;
+    header = (char *) calloc(sizeof(char), 64);
+    sprintf(header, "P2\n%d %d\n%d\n", NY/COMPR, NX/COMPR, MAXVAL);
+    fwrite(header, sizeof(char), strlen(header), head);
+    free(header);
+
+    fclose(head);
+
 
     system("Scripts/generar_imagen.sh");
 
