@@ -1,0 +1,180 @@
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.347487 s
+Creacion de imagen finalizada @8.253535 s
+creacion de .nc @10.181740 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.305794 s
+Creacion de imagen finalizada @10.016942 s
+creacion de .nc @12.381799 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.306639 s
+Creacion de imagen finalizada @10.540514 s
+creacion de .nc @12.906196 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.302577 s
+Creacion de imagen finalizada @10.784792 s
+creacion de .nc @12.955671 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.301438 s
+Creacion de imagen finalizada @11.190179 s
+creacion de .nc @14.440930 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.327472 s
+Creacion de imagen finalizada @10.524584 s
+creacion de .nc @12.713003 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.330985 s
+Creacion de imagen finalizada @9.833628 s
+creacion de .nc @11.909018 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.306050 s
+Creacion de imagen finalizada @10.823175 s
+creacion de .nc @13.131357 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.345844 s
+Creacion de imagen finalizada @11.145337 s
+creacion de .nc @13.900470 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.348231 s
+Creacion de imagen finalizada @10.238593 s
+creacion de .nc @12.594941 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.339515 s
+Creacion de imagen finalizada @10.771444 s
+creacion de .nc @13.134683 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.341327 s
+Creacion de imagen finalizada @10.201796 s
+creacion de .nc @12.313450 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.327140 s
+Creacion de imagen finalizada @10.362927 s
+creacion de .nc @12.704394 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.314602 s
+Creacion de imagen finalizada @10.257092 s
+creacion de .nc @12.417880 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.307601 s
+Creacion de imagen finalizada @10.637248 s
+creacion de .nc @13.002463 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.303953 s
+Creacion de imagen finalizada @10.600869 s
+creacion de .nc @12.957260 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.302312 s
+Creacion de imagen finalizada @10.628893 s
+creacion de .nc @13.892398 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.348645 s
+Creacion de imagen finalizada @10.547384 s
+creacion de .nc @12.912925 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.331930 s
+Creacion de imagen finalizada @10.182955 s
+creacion de .nc @12.228167 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.334223 s
+Creacion de imagen finalizada @10.996862 s
+creacion de .nc @13.360211 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.303682 s
+Creacion de imagen finalizada @10.590690 s
+creacion de .nc @12.863500 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.337733 s
+Creacion de imagen finalizada @10.506697 s
+creacion de .nc @13.793291 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.341799 s
+Creacion de imagen finalizada @10.636581 s
+creacion de .nc @12.975688 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.305443 s
+Creacion de imagen finalizada @10.252595 s
+creacion de .nc @12.780066 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.297942 s
+Creacion de imagen finalizada @10.571408 s
+creacion de .nc @12.929090 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.306153 s
+Creacion de imagen finalizada @11.115653 s
+creacion de .nc @13.486322 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.306345 s
+Creacion de imagen finalizada @10.527493 s
+creacion de .nc @12.883471 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.335128 s
+Creacion de imagen finalizada @10.668025 s
+creacion de .nc @13.023855 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.307725 s
+Creacion de imagen finalizada @10.128240 s
+creacion de .nc @12.479758 s
+
+PROCESANDO CON 16 THREADS...
+
+Convolucion finalizada @0.305644 s
+Creacion de imagen finalizada @10.624829 s
+creacion de .nc @12.966338 s

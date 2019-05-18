@@ -144,7 +144,6 @@ int main()
 
     fclose(head);
 
-
     system("Scripts/generar_imagen.sh");
 
     double time_img = (omp_get_wtime() - start_time) - time_conv;
